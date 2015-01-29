@@ -58,7 +58,7 @@ module WebsocketRails
       end
 
       def on_close(data=nil)
-        @ping_timer.try(:cancel)
+        @ping_timer.cancel
         dispatch Event.new_on_close( self, data )
         close_connection
       end
@@ -121,6 +121,10 @@ module WebsocketRails
         not user_identifier.nil?
       end
 
+      def user=(user)
+        controller_delegate.current_user = user
+      end
+
       def user
         return unless user_connection?
         controller_delegate.current_user
@@ -134,16 +138,6 @@ module WebsocketRails
 
           controller_delegate.current_user.send(identifier)
          end
-      end
-
-      def ping_interval
-        @ping_interval ||= WebsocketRails.config.default_ping_interval
-      end
-
-      def ping_interval=(interval)
-        @ping_interval = interval.to_i
-        @ping_timer.try(:cancel)
-        start_ping_timer
       end
 
       private
@@ -174,18 +168,14 @@ module WebsocketRails
 
       def start_ping_timer
         @pong = true
-
-        # Set negative interval to nil to deactivate periodic pings
-        if ping_interval > 0
-          @ping_timer = EM::PeriodicTimer.new(ping_interval) do
-            if pong == true
-              self.pong = false
-              ping = Event.new_on_ping self
-              trigger ping
-            else
-              @ping_timer.cancel
-              on_error
-            end
+        @ping_timer = EM::PeriodicTimer.new(10) do
+          if pong == true
+            self.pong = false
+            ping = Event.new_on_ping self
+            trigger ping
+          else
+            @ping_timer.cancel
+            on_error
           end
         end
       end
