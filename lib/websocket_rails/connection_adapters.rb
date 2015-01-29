@@ -121,6 +121,10 @@ module WebsocketRails
         not user_identifier.nil?
       end
 
+      def user=(user)
+        controller_delegate.current_user = user
+      end
+
       def user
         return unless user_connection?
         controller_delegate.current_user

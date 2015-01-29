@@ -9,5 +9,6 @@ module WebsocketRails
   # methods to the active connection's delegation controller
   # instance.
   class DelegationController < ApplicationController
+    attr_accessor :current_user
   end
 end
